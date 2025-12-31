@@ -1,5 +1,7 @@
 ## malli-firewall
 
+[![Clojars Project](https://img.shields.io/clojars/v/com.sturdystats/malli-firewall.svg)](https://clojars.org/com.sturdystats/malli-firewall)
+
 A high-performance, security-focused Clojure validation library built on [**Malli**](https://github.com/metosin/malli).
 Designed for web applications that need to ingest untrusted Ring parameters safely, while also providing human-friendly error reporting.
 
@@ -21,6 +23,14 @@ This response is controlled by the dynamic var `malli-firewall.web/*bad-request-
 * **Typo Tolerance:** Intelligently retains "near-miss" keys (typos) so that Malli can provide helpful spell-checking suggestions.
 * **Structured Errors:** Returns humanized error maps ready for frontend consumption or structured logging.
 * **Zero-Overhead Handlers:** Uses macros to ensure validation and coercion happen before your business logic executes.
+
+## Installation
+
+Add to `deps.edn`:
+
+```clojure
+{:deps {com.sturdystats/malli-firewall {:mvn/version "VERSION"}}}
+```
 
 ## Usage
 
