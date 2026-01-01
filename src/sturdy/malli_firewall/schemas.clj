@@ -28,9 +28,16 @@
   [:and string? [:fn {:error/message "leading/trailing spaces not allowed"}
                  #(= % (string/trim %))]])
 
+(defn relative-uri?
+  [s]
+  (and
+   (string? s)
+   (seq s)
+   (string/starts-with? s "/")
+   (not (string/starts-with? s "//"))))
+
 (def RelativeURI
-  [:and string? [:fn {:error/message "must begin with '/'."}
-                 (starts-with? "/")]])
+  [:fn {:error/message "must be a relative URI starting with '/'"} relative-uri?])
 
 (def PositiveInt
   [:and [:int] [:> 0]])
