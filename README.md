@@ -17,6 +17,10 @@ The wrapped handler does not run unless schema validation passes, and will only 
 On validation failure, `with-schema` returns a 400 response.
 This response is controlled by the dynamic var `malli-firewall.web/*bad-request-handler*`, which you may re-bind to your own 400 handler.
 
+malli-firewall was originally developed to meet the internal security and operational requirements of **Sturdy Statistics**.
+It is published as open source to support transparency, auditability, and reuse, but its design is intentionally conservative and driven by real production needs.
+We may not accept feature requests that dilute its focus.
+
 ## Core Principles
 
 * **Memory Safety:** Prevents Denial of Service (DoS) attacks by strictly controlling keyword interning.  Arbitrary user input is never interned.
