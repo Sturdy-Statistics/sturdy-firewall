@@ -56,7 +56,7 @@ Define your requirements using standard Malli syntax.
 
 ### 2. Validate in Handlers
 
-Use the with-schema macro in your Ring handlers to guard your logic.
+Use the `with-schema` macro in your Ring handlers to guard your logic.
 
 ```clj
 (defn handle-login [request]
@@ -69,6 +69,28 @@ Use the with-schema macro in your Ring handlers to guard your logic.
       ;; 4. Typed: Values (e.g., "123" -> 123) are coerced per schema.
       (auth/login! username token))))
 ```
+
+If you have multiple maps, use the `with-schemas` macro instead:
+
+``` clojure
+(with-schemas {:params      schemas/LoginRequest
+               :path-params schemas/UserPath}
+  request
+  (handler request))
+```
+
+If validation fails, the handler is not executed and a `400 Bad Request`
+response is returned.
+
+Example error:
+
+``` clojure
+{:error "Bad Request"
+ :message "Invalid request parameters"
+ :details {:user-id ["missing required key"]}
+ :flat-message "user-id: missing required key"}
+```
+
 
 ### 3. Use Directly:
 
@@ -84,6 +106,21 @@ Use the with-schema macro in your Ring handlers to guard your logic.
 ;;     {:username ["missing required key"],
 ;;      :tokens ["should be spelled :token"]}}
 ```
+
+For inline validation (similar to `truss.have`), `have-schema` ensures data is valid or throws an exception.
+
+``` clojure
+(let [params (f/have-schema schemas/LoginRequest params)]
+  ...)
+```
+
+On failure it throws:
+
+``` clojure
+(ex-info "Bad request" {:message ...
+                        :problems ...})
+```
+
 
 ## Configuration
 

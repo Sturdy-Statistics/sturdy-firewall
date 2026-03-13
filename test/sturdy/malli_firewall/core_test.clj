@@ -73,16 +73,16 @@
   (testing "Relative URI validation"
     (is (contains? (sc/validate TestRequest {:username "a" :token "b" :next "/ok"}) :ok))
     (let [{:keys [error]} (sc/validate TestRequest {:username "a" :token "b" :next "http://bad"})]
-      (is (= {:next ["must begin with '/'."]} (:problems error))))))
+      (is (= {:next ["must be a relative URI starting with '/'"]} (:problems error))))))
 
-(deftest assert-valid!-test
+(deftest have-schema-test
   (testing "Throws on invalid data"
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Bad request"
-                          (sc/assert-valid! TestRequest {"username" "bob"})))) ; missing token
+                          (sc/have-schema TestRequest {"username" "bob"})))) ; missing token
 
   (testing "Returns data on success"
     (is (= {:username "bob" :token "pass"}
-           (select-keys (sc/assert-valid! TestRequest {:username "bob" :token "pass"})
+           (select-keys (sc/have-schema TestRequest {:username "bob" :token "pass"})
                         [:username :token])))))
 
 (deftest core-coerce-memory-safety-test

@@ -57,32 +57,53 @@
   [request details]
   (*bad-request-handler* request details))
 
-;; Use a macro (not a function) so that `body` is not evaluated unless validation passes.
-(defmacro with-schema
-  "Coerces and validates request params against schema.
+(defmacro with-schemas
+  "Coerces and validates multiple request maps against their respective schemas.
 
-  On success: Updates :params in the request with coerced values
-  and executes body.
-  On failure: Short-circuits and returns a 400 Bad Request via
-  bad-request-response.
+  Accepts a map of request keys to schemas (e.g., {:params LoginRequest, :path-params UserPath}).
+
+  On success: Merges coerced maps back into the request and executes body.
+  On failure: Short-circuits on the first failure and returns a 400 Bad Request via
+  bad-request-response. Includes an `:in` key in the error details indicating which
+  request key failed validation.
 
   Uses the dynamic variables
     *bad-request-handler* to format 400 responses
     *strip-unknown-keys* to control behavior for unknown keys
-  See the docstrings for these symbols for more information.
 
   Usage:
-     (with-schema schema/LoginRequest request
-       (handler request))"
-  [schema request & body]
+      (with-schemas {:params      schema/LoginRequest
+                     :path-params schema/UserPath}
+        request
+        (handler request))"
+  [schema-map request & body]
   `(let [req# ~request
-         ;; Use the raw params from the request
-         raw-params# (or (:params req#) {})
-         res# (c/validate ~schema raw-params#
-                          {:strip-unknown-keys? *strip-unknown-keys*})]
-     (if-let [errors# (:error res#)]
+         schemas# ~schema-map
+         ;; Run validation across all defined keys in the schema-map
+         results# (reduce-kv
+                   (fn [acc# req-key# schema#]
+                     (let [raw-data# (get req# req-key# {})
+                           res# (c/validate schema# raw-data#
+                                            {:strip-unknown-keys? *strip-unknown-keys*})]
+                       (if-let [err# (:error res#)]
+                         ;; Short-circuit on first error, tagging where it happened
+                         (reduced {:error (assoc err# :in req-key#)})
+                         ;; Accumulate the successfully coerced maps
+                         (assoc-in acc# [:ok req-key#] (:ok res#)))))
+                   {:ok {}}
+                   schemas#)]
+     (if-let [errors# (:error results#)]
        ;; Short-circuit: body is never evaluated
        (bad-request-response req# errors#)
-       ;; Success: Shadow the request symbol with coerced data
-       (let [~request (assoc req# :params (:ok res#))]
+       ;; Success: Merge the newly coerced data maps back into the request map
+       (let [~request (merge req# (:ok results#))]
          ~@body))))
+
+(defmacro with-schema
+  "Convenience wrapper for `with-schemas` when only validating `:params`.
+
+  Usage:
+      (with-schema schema/LoginRequest request
+        (handler request))"
+  [schema request & body]
+  `(with-schemas {:params ~schema} ~request ~@body))

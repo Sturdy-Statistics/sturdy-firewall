@@ -75,14 +75,14 @@
         {:error {:message "Invalid request parameters"
                  :problems expl}}))))
 
-(defn assert-valid!
+(defn have-schema
   "Ensures input is valid or terminates execution.
 
   Returns coerced data on success.
 
   Throws an ex-info with type :bad-request on failure, containing
-  humanized error details in the exception data.  Ideal for use in
-  request-handling macros.
+  humanized error details in the exception data.  Ideal for use inline
+  or in request-handling macros (similar to `truss/have`).
 
   See `coerce` for documentation on the options and coercion."
   [schema params & [opts]]
@@ -90,3 +90,10 @@
     (if (:error res)
       (throw (ex-info "Bad request" (:error res)))
       (:ok res))))
+
+(defn ^:deprecated assert-valid!
+  "DEPRECATED: Use `have-schema` instead.
+
+  Ensures input is valid or terminates execution."
+  [schema params & [opts]]
+  (have-schema schema params opts))

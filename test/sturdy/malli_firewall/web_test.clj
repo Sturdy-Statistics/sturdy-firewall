@@ -75,3 +75,51 @@
 
       (is (nil? (find-keyword junk-key))
           "Even when not stripping, the unknown key must NOT be interned"))))
+
+(deftest with-schemas-test
+  (testing "Successful validation merges all coerced maps back into the request"
+    (let [request {:params {"username" "bob" "token" "secret"}
+                   ;; path params often come in as strings from the URI
+                   :path-params {:user-id "123"}}
+          schema-map {:params      schemas/LoginRequest
+                      :path-params [:map [:user-id int?]]}
+          result (web/with-schemas schema-map request
+                   ;; Return only the newly coerced maps to verify
+                   (select-keys request [:params :path-params]))]
+
+      (is (= {:params      {:username "bob" :token "secret"}
+              :path-params {:user-id 123}} ;; Coerced to an integer
+             result)
+          "The body should execute and see fully coerced, keywordized parameters.")))
+
+  (testing "Validation failure on :path-params short-circuits and tags the error source"
+    (binding [web/*bad-request-handler* (fn [_req details] details)]
+      (let [body-executed? (atom false)
+            request {:params      {"username" "bob" "token" "secret"}
+                     :path-params {:user-id "not-an-int"}} ;; Will fail int? coercion
+            schema-map {:params      schemas/LoginRequest
+                        :path-params [:map [:user-id int?]]}
+            result (web/with-schemas schema-map request
+                     (reset! body-executed? true)
+                     :should-not-reach-here)]
+
+        (is (false? @body-executed?)
+            "The body should NOT be evaluated if validation fails.")
+
+        (is (= :path-params (:in result))
+            "The error map should indicate that :path-params failed.")
+
+        (is (contains? (:problems result) :user-id)
+            "The structured problems map should identify the failing key."))))
+
+  (testing "Validation failure on :params short-circuits and tags the error source"
+    (binding [web/*bad-request-handler* (fn [_req details] details)]
+      (let [request {:params      {"username" "bob"} ;; Missing token
+                     :path-params {:user-id "123"}}
+            schema-map {:params      schemas/LoginRequest
+                        :path-params [:map [:user-id int?]]}
+            result (web/with-schemas schema-map request
+                     :should-not-reach-here)]
+
+        (is (= :params (:in result))
+            "The error map should indicate that :params failed.")))))
