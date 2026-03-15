@@ -1,6 +1,8 @@
 (ns sturdy.malli-firewall.schemas
   (:require
-   [clojure.string :as string]))
+   [clojure.string :as string])
+  (:import
+   (java.util UUID)))
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Utilities
@@ -41,6 +43,32 @@
 
 (def PositiveInt
   [:and [:int] [:> 0]])
+
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; tagged UUID
+
+(defn tagged-uuid
+  "A schema that requires a string to have a specific prefix, but decodes
+  it into a pure java.util.UUID for internal use."
+  [prefix]
+  (let [pfx (str prefix "-")
+        pfx-len (count pfx)]
+    [:and
+     {:decode/string
+      (fn [x]
+        (if (and (string? x) (string/starts-with? x pfx))
+          (try
+            ;; Strip the prefix and parse the remaining UUID
+            (UUID/fromString (subs x pfx-len))
+            (catch Exception _ x))
+          x))
+
+      :encode/string
+      (fn [x]
+        (if (uuid? x) (str pfx x) x))}
+
+     [:fn {:error/message (str "must be a valid UUID prefixed with '" pfx "'")}
+      uuid?]]))
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Schemas
