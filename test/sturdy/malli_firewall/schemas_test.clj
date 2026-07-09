@@ -7,6 +7,64 @@
   (:import
    [java.util UUID]))
 
+(deftest ends-with-ext-test
+  (let [schema (schemas/ends-with-ext ".csv")]
+    (testing "Accepts strings ending with the requested extension"
+      (is (m/validate schema "report.csv"))
+      (is (m/validate schema ".csv")))
+
+    (testing "Rejects strings with a different ending"
+      (is (false? (m/validate schema "report.tsv")))
+      (is (false? (m/validate schema "report.csv.bak"))))
+
+    (testing "Rejects non-string values"
+      (is (false? (m/validate schema nil)))
+      (is (false? (m/validate schema 42))))))
+
+(deftest non-blank-string-test
+  (testing "Accepts non-empty strings"
+    (is (m/validate schemas/NonBlankString "x"))
+    (is (m/validate schemas/NonBlankString " ")))
+
+  (testing "Rejects empty and non-string values"
+    (is (false? (m/validate schemas/NonBlankString "")))
+    (is (false? (m/validate schemas/NonBlankString nil)))
+    (is (false? (m/validate schemas/NonBlankString 42)))))
+
+(deftest trimmed-string-test
+  (testing "Accepts strings without leading or trailing whitespace"
+    (is (m/validate schemas/TrimmedString "hello"))
+    (is (m/validate schemas/TrimmedString "")))
+
+  (testing "Rejects strings with leading or trailing whitespace"
+    (is (false? (m/validate schemas/TrimmedString " hello")))
+    (is (false? (m/validate schemas/TrimmedString "hello ")))
+    (is (false? (m/validate schemas/TrimmedString "\thello\n"))))
+
+  (testing "Rejects non-string values"
+    (is (false? (m/validate schemas/TrimmedString nil)))
+    (is (false? (m/validate schemas/TrimmedString 42)))))
+
+(deftest positive-int-test
+  (testing "Accepts positive integers"
+    (is (m/validate schemas/PositiveInt 1))
+    (is (m/validate schemas/PositiveInt 42)))
+
+  (testing "Rejects zero, negative, and non-integer values"
+    (is (false? (m/validate schemas/PositiveInt 0)))
+    (is (false? (m/validate schemas/PositiveInt -1)))
+    (is (false? (m/validate schemas/PositiveInt "1")))
+    (is (false? (m/validate schemas/PositiveInt nil)))))
+
+(deftest empty-request-test
+  (testing "Accepts an empty request map and optional anti-forgery token"
+    (is (m/validate schemas/EmptyRequest {}))
+    (is (m/validate schemas/EmptyRequest {:__anti-forgery-token "token"})))
+
+  (testing "Rejects unknown keys and non-string anti-forgery token"
+    (is (false? (m/validate schemas/EmptyRequest {:extra "value"})))
+    (is (false? (m/validate schemas/EmptyRequest {:__anti-forgery-token 42})))))
+
 (deftest relative-uri-test
   (testing "Accepts path-only relative URIs"
     (doseq [uri ["/"
