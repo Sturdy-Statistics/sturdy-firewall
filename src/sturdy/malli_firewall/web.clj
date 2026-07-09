@@ -25,7 +25,7 @@
       (str message ": " (format-problems problems))
 
       ;; either message or problems, but not both
-      (seq? problems) (format-problems problems)
+      (seq problems) (format-problems problems)
 
       ;; either message or nil
       :else message)))

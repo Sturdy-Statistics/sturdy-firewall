@@ -4,6 +4,28 @@
    [sturdy.malli-firewall.web :as web]
    [sturdy.malli-firewall.schemas :as schemas]))
 
+(deftest format-schema-error-test
+  (testing "Formats details with both message and problems"
+    (is (= "Invalid request parameters: username: missing.  token: missing"
+           (web/format-schema-error
+            {:message "Invalid request parameters"
+             :problems {:username ["missing"]
+                        :token ["missing"]}}))))
+
+  (testing "Formats details with only problems"
+    (is (= "username: missing.  token: missing"
+           (web/format-schema-error
+            {:problems {:username ["missing"]
+                        :token ["missing"]}}))))
+
+  (testing "Formats details with only a message"
+    (is (= "Invalid request parameters"
+           (web/format-schema-error
+            {:message "Invalid request parameters"}))))
+
+  (testing "Returns nil for empty details"
+    (is (nil? (web/format-schema-error {})))))
+
 (deftest with-schema-test
   (testing "Successful validation binds coerced params and executes body"
     (let [request {:params {"username" "bob" "token" "secret"}}
