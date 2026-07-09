@@ -9,7 +9,7 @@ Designed for web applications that need to ingest untrusted Ring parameters safe
 It converts valid keys to keywords, so your handler code may use keyword idioms.
 However, unlike the Ring middleware [`wrap-keyword-params`](https://ring-clojure.github.io/ring/ring.middleware.keyword-params.html#var-wrap-keyword-params), it will not intern unexpected keys or arbitrary user input.
 
-Unexpected keys which are suspected typos of valid keys are left in the map as strings human-friendly error reporting.
+Unexpected keys which are suspected typos of valid keys are left in the map as strings for human-friendly error reporting.
 By default, all other keys are stripped automatically so they are never visible to handler code.
 Optionally, you may re-bind the dynamic var `malli-firewall.web/*strip-unknown-keys*` to `false`; in this case unexpected keys are retained as strings, so that closed schemas may fail validation.
 
@@ -59,6 +59,8 @@ Define your requirements using standard Malli syntax.
 Use the `with-schema` macro in your Ring handlers to guard your logic.
 
 ```clj
+(require '[sturdy.malli-firewall.web :refer [with-schema with-schemas]])
+
 (defn handle-login [request]
   (with-schema schemas/LoginRequest request
     (let [{:keys [username token]} (:params request)]
@@ -133,7 +135,7 @@ You can customize the firewall behavior using dynamic variables:
 
 ## The Transformation Pipeline
 
-Sturdy Schema uses a multi-stage transformation process to ensure data integrity:
+malli-firewall uses a multi-stage transformation process to ensure data integrity:
 
 1. **Smart Keywordization:** Strings matching schema keys are converted to keywords.  Close typos are retained as strings.
 2. **DoS Protection:** Unknown strings are dropped (stripped) before they can be interned.
