@@ -75,11 +75,11 @@
 
   (testing "UX: Typo keys are keywordized to allow error reporting"
     (binding [web/*bad-request-handler* (fn [_req details] details)]
-     (let [request {:params {"usernam" "alice" "token" "pass"}}
-           response (web/with-schema schemas/LoginRequest request
-                      :should-not-reach-here)]
-       (is (contains? (get-in response [:problems]) "usernam")
-           "The error response should specifically mention the typoed key.")))))
+      (let [request {:params {"usernam" "alice" "token" "pass"}}
+            response (web/with-schema schemas/LoginRequest request
+                       :should-not-reach-here)]
+        (is (contains? (get-in response [:problems]) "usernam")
+            "The error response should specifically mention the typoed key.")))))
 
 (testing "Behavior when *strip-unknown-keys* is false"
   (binding [web/*strip-unknown-keys* false
