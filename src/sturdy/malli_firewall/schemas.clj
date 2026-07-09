@@ -23,6 +23,16 @@
   [pfx]
   (fn [s] (and (string? s) (string/starts-with? s pfx))))
 
+(defn- raw-whitespace-or-control?
+  [s]
+  (some #(or (Character/isWhitespace ^char %)
+             (Character/isISOControl ^char %))
+        s))
+
+(defn- percent-encoded-control?
+  [s]
+  (boolean (re-find #"(?i)%0[0-9a-f]|%1[0-9a-f]|%7f" s)))
+
 (def NonBlankString
   [:string {:min 1}])
 
@@ -36,7 +46,9 @@
    (string? s)
    (seq s)
    (string/starts-with? s "/")
-   (not (string/starts-with? s "//"))))
+   (not (string/starts-with? s "//"))
+   (not (raw-whitespace-or-control? s))
+   (not (percent-encoded-control? s))))
 
 (def RelativeURI
   [:fn {:error/message "must be a relative URI starting with '/'"} relative-uri?])

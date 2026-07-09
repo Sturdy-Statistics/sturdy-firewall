@@ -7,6 +7,38 @@
   (:import
    [java.util UUID]))
 
+(deftest relative-uri-test
+  (testing "Accepts path-only relative URIs"
+    (doseq [uri ["/"
+                 "/dashboard"
+                 "/dashboard?tab=settings"
+                 "/dashboard#profile"
+                 "/files/report%20draft.pdf"]]
+      (is (m/validate schemas/RelativeURI uri))))
+
+  (testing "Rejects non-relative or empty values"
+    (doseq [uri [nil
+                 ""
+                 "dashboard"
+                 "https://example.com/dashboard"
+                 "//example.com/dashboard"]]
+      (is (false? (m/validate schemas/RelativeURI uri)))))
+
+  (testing "Rejects raw whitespace and control characters"
+    (doseq [uri ["/with space"
+                 "/with\ttab"
+                 "/with\nnewline"
+                 "/with\rreturn"
+                 "/\r\nHeader: x"]]
+      (is (false? (m/validate schemas/RelativeURI uri)))))
+
+  (testing "Rejects percent-encoded control characters"
+    (doseq [uri ["/%0d%0aHeader:x"
+                 "/%0D%0AHeader:x"
+                 "/path/%09tab"
+                 "/path/%7Fdelete"]]
+      (is (false? (m/validate schemas/RelativeURI uri))))))
+
 (deftest tagged-uuid-test
   (let [Schema      (schemas/tagged-uuid "org")
         raw-uuid    "018f0000-0000-0000-0000-000000000000"
