@@ -81,22 +81,23 @@
         (is (contains? (get-in response [:problems]) "usernam")
             "The error response should specifically mention the typoed key.")))))
 
-(testing "Behavior when *strip-unknown-keys* is false"
-  (binding [web/*strip-unknown-keys* false
-            web/*bad-request-handler* (fn [_req details] details)]
-    (let [junk-key (str "web-junk-" (random-uuid))
-          request {:params {junk-key "val" "username" "bob" "token" "pass"}}
-          response (web/with-schema schemas/LoginRequest request
-                     :should-not-reach-here)]
+(deftest retain-unknown-keys-test
+  (testing "Behavior when *strip-unknown-keys* is false"
+    (binding [web/*strip-unknown-keys* false
+              web/*bad-request-handler* (fn [_req details] details)]
+      (let [junk-key (str "web-junk-" (random-uuid))
+            request {:params {junk-key "val" "username" "bob" "token" "pass"}}
+            response (web/with-schema schemas/LoginRequest request
+                       :should-not-reach-here)]
 
-      (is (contains? (:problems response) junk-key)
-          "The unknown key should be present in the error map as a string")
+        (is (contains? (:problems response) junk-key)
+            "The unknown key should be present in the error map as a string")
 
-      (is (= ["disallowed key"] (get-in response [:problems junk-key]))
-          "The closed schema should fail validation because of the string key")
+        (is (= ["disallowed key"] (get-in response [:problems junk-key]))
+            "The closed schema should fail validation because of the string key")
 
-      (is (nil? (find-keyword junk-key))
-          "Even when not stripping, the unknown key must NOT be interned"))))
+        (is (nil? (find-keyword junk-key))
+            "Even when not stripping, the unknown key must NOT be interned")))))
 
 (deftest with-schemas-test
   (testing "Successful validation merges all coerced maps back into the request"
