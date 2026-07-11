@@ -26,6 +26,21 @@
   (testing "Returns nil for empty details"
     (is (nil? (web/format-schema-error {})))))
 
+(deftest default-bad-request-handler-test
+  (let [body-executed? (atom false)
+        request {:params {"username" "bob"}}
+        response (web/with-schema schemas/LoginRequest request
+                   (reset! body-executed? true)
+                   :should-not-reach-here)]
+    (is (false? @body-executed?))
+    (is (= 400 (:status response)))
+    (is (= {"Content-Type" "application/json"} (:headers response)))
+    (is (= {:error "Bad Request"
+            :message "Invalid request parameters"
+            :details {:token ["missing required key"]}
+            :flat-message "Invalid request parameters: token: missing required key"}
+           (:body response)))))
+
 (deftest with-schema-test
   (testing "Successful validation binds coerced params and executes body"
     (let [request {:params {"username" "bob" "token" "secret"}}
