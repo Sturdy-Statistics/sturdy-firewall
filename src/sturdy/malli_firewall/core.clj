@@ -80,9 +80,9 @@
 
   Returns coerced data on success.
 
-  Throws an ex-info with type :bad-request on failure, containing
-  humanized error details in the exception data.  Ideal for use inline
-  or in request-handling macros (similar to `truss/have`).
+  Throws an ex-info on failure, containing a human-readable :message and
+  humanized :problems in the exception data.  Ideal for use inline or in
+  request-handling macros (similar to `truss/have`).
 
   See `coerce` for documentation on the options and coercion."
   [schema params & [opts]]
