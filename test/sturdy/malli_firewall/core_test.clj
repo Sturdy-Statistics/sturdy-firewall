@@ -60,6 +60,16 @@
           res (sc/validate schema input)]
       (is (= {:ok {:user/id 123}} res))))
 
+  (testing "Canonical key collisions return a validation error"
+    (let [input (array-map "username" "attacker"
+                           :username "trusted"
+                           :token "pass")
+          {:keys [error]} (sc/validate TestRequest input)]
+      (is (= "Invalid request parameters" (:message error)))
+      (is (= {:username ["duplicate parameter"]} (:problems error)))
+      (is (= :duplicate-parameter (:type error)))
+      (is (= #{"username" :username} (:input-keys error)))))
+
   (testing "Nested map validation and stripping"
     (let [schema [:map [:user [:map [:id :int]]]]
           input {"user" {"id" "123" "extra" "garbage"}}

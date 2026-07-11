@@ -65,15 +65,23 @@
 
   See `coerce` for documentation on the options and coercion."
   [schema params & [opts]]
-  (let [coerced (coerce schema params opts)]
-    (if (m/validate schema coerced)
-      {:ok coerced}
-      (let [expl (->> coerced
-                      (m/explain schema)
-                      (me/with-spell-checking)
-                      (me/humanize))]
-        {:error {:message "Invalid request parameters"
-                 :problems expl}}))))
+  (try
+    (let [coerced (coerce schema params opts)]
+      (if (m/validate schema coerced)
+        {:ok coerced}
+        (let [expl (->> coerced
+                        (m/explain schema)
+                        (me/with-spell-checking)
+                        (me/humanize))]
+          {:error {:message "Invalid request parameters"
+                   :problems expl}})))
+    (catch clojure.lang.ExceptionInfo ex
+      (let [{:keys [type key] :as data} (ex-data ex)]
+        (if (= :duplicate-parameter type)
+          {:error (assoc data
+                         :message "Invalid request parameters"
+                         :problems {key ["duplicate parameter"]})}
+          (throw ex))))))
 
 (defn have-schema
   "Ensures input is valid or terminates execution.

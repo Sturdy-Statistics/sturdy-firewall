@@ -79,7 +79,21 @@
             response (web/with-schema schemas/LoginRequest request
                        :should-not-reach-here)]
         (is (contains? (get-in response [:problems]) "usernam")
-            "The error response should specifically mention the typoed key.")))))
+            "The error response should specifically mention the typoed key."))))
+
+  (testing "Duplicate parameters return an error without executing the body"
+    (binding [web/*bad-request-handler* (fn [_req details] details)]
+      (let [body-executed? (atom false)
+            request {:params (array-map "username" "attacker"
+                                        :username "trusted"
+                                        :token "pass")}
+            response (web/with-schema schemas/LoginRequest request
+                       (reset! body-executed? true)
+                       :should-not-reach-here)]
+        (is (false? @body-executed?))
+        (is (= :duplicate-parameter (:type response)))
+        (is (= {:username ["duplicate parameter"]}
+               (:problems response)))))))
 
 (deftest retain-unknown-keys-test
   (testing "Behavior when *strip-unknown-keys* is false"
@@ -145,4 +159,18 @@
                      :should-not-reach-here)]
 
         (is (= :params (:in result))
-            "The error map should indicate that :params failed.")))))
+            "The error map should indicate that :params failed."))))
+
+  (testing "Nested duplicate parameters fail through the normal error path"
+    (binding [web/*bad-request-handler* (fn [_req details] details)]
+      (let [body-executed? (atom false)
+            request {:body-params
+                     {:user (array-map "id" "attacker" :id "trusted")}}
+            schema-map {:body-params [:map [:user [:map [:id :string]]]]}
+            result (web/with-schemas schema-map request
+                     (reset! body-executed? true)
+                     :should-not-reach-here)]
+        (is (false? @body-executed?))
+        (is (= :body-params (:in result)))
+        (is (= :duplicate-parameter (:type result)))
+        (is (= {:id ["duplicate parameter"]} (:problems result)))))))
