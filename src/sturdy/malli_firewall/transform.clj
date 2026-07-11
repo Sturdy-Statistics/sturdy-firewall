@@ -41,12 +41,11 @@
 
 (defn smart-key-transformer
   "Malli transformer that selectively keywordizes map keys.
-  It only interns strings that match schema keys exactly or appear to be
-  misspellings (fuzzy match).
+  It interns only strings that exactly match schema keys. Near-miss strings
+  are retained as strings so Malli can provide spelling suggestions.
 
-  If `:strip-unknown-keys?` is truthy, all other keys are dropped; otherwise
-  otherwise they are left as strings.  (Note that unknown keys are converted
-  to strings, even if they were originally keywords.
+  If `:strip-unknown-keys?` is truthy, all other keys are dropped. Otherwise,
+  unknown keys are retained as strings, even if they were originally keywords.
 
   Prevents memory exhaustion (DoS) from arbitrary keyword interning
   while preserving typos for humanized error reporting."
