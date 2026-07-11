@@ -18,6 +18,15 @@
     (st/smart-key-transformer {:strip-unknown-keys? true})
     mt/string-transformer)))
 
+(defn- duplicate-parameter-data [schema data strip-unknown-keys?]
+  (try
+    (m/decode schema data
+              (st/smart-key-transformer
+               {:strip-unknown-keys? strip-unknown-keys?}))
+    nil
+    (catch clojure.lang.ExceptionInfo ex
+      (ex-data ex))))
+
 (deftest smart-key-transformer-test
   (testing "Exact matches are keywordized and kept"
     (is (= {:username "bob"}
@@ -93,3 +102,32 @@
           res (m/decode TestSchema2 input transformer)]
       (is (= {:username "alice" :user/id 123 :active? true} res)
           "Should correctly handle namespaced strings and boolean coercion"))))
+
+(deftest canonical-key-collision-test
+  (doseq [strip-unknown-keys? [true false]
+          input [(array-map "username" "attacker" :username "trusted")
+                 (array-map :username "trusted" "username" "attacker")
+                 (array-map "username" "same" :username "same")]]
+    (testing (str "rejects string/keyword collisions regardless of order, value, or strip mode: "
+                  input)
+      (is (= {:type :duplicate-parameter
+              :key :username
+              :input-keys #{"username" :username}}
+             (duplicate-parameter-data TestSchema input strip-unknown-keys?)))))
+
+  (testing "rejects namespaced string/keyword collisions"
+    (is (= {:type :duplicate-parameter
+            :key :user/id
+            :input-keys #{"user/id" :user/id}}
+           (duplicate-parameter-data
+            TestSchema2
+            (array-map :user/id 1 "user/id" 2)
+            true))))
+
+  (testing "rejects collisions in nested maps"
+    (let [schema [:map [:user [:map [:id :int]]]]
+          input {:user (array-map "id" 1 :id 2)}]
+      (is (= {:type :duplicate-parameter
+              :key :id
+              :input-keys #{"id" :id}}
+             (duplicate-parameter-data schema input true))))))

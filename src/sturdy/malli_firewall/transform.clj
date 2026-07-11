@@ -68,7 +68,15 @@
                                ;; 1. Exact match (String or KW) -> Keywordize
                                (or (contains? valid-kw-keys k)
                                    (contains? valid-str-keys k-str))
-                               (assoc acc (keyword k-str) v)
+                               (let [output-key (keyword k-str)]
+                                 (if (contains? acc output-key)
+                                   (throw
+                                    (ex-info
+                                     (str "Duplicate parameter: " output-key)
+                                     {:type :duplicate-parameter
+                                      :key output-key
+                                      :input-keys #{output-key (full-name output-key)}}))
+                                   (assoc acc output-key v)))
 
                                ;; 2. Smart typo check -> keep as original
                                (some #(is-similar? k-str %) valid-str-keys)
