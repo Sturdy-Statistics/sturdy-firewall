@@ -3,6 +3,8 @@
    [clojure.test :refer [deftest is testing]]
    [sturdy.malli-firewall.util :as util]))
 
+(set! *warn-on-reflection* true)
+
 (deftest full-name-test
   (testing "Standard string and keyword handling"
     (is (= "username" (util/full-name "username")) "Should return string as-is")

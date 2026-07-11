@@ -4,6 +4,8 @@
    [sturdy.malli-firewall.core :as sc]
    [sturdy.malli-firewall.schemas :as ss]))
 
+(set! *warn-on-reflection* true)
+
 (def TestRequest
   [:map {:closed true}
    [:username  ss/NonBlankString]

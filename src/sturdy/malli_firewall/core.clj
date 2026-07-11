@@ -5,6 +5,8 @@
    [malli.transform :as mt]
    [sturdy.malli-firewall.transform :as st]))
 
+(set! *warn-on-reflection* true)
+
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Transformers
 

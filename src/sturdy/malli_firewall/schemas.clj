@@ -4,6 +4,8 @@
   (:import
    (java.util UUID)))
 
+(set! *warn-on-reflection* true)
+
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Utilities
 

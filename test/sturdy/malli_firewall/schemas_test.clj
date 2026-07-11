@@ -7,6 +7,8 @@
   (:import
    [java.util UUID]))
 
+(set! *warn-on-reflection* true)
+
 (deftest ends-with-ext-test
   (let [schema (schemas/ends-with-ext ".csv")]
     (testing "Accepts strings ending with the requested extension"

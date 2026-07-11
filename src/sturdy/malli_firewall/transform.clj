@@ -5,6 +5,8 @@
    [malli.transform :as mt]
    [sturdy.malli-firewall.util :refer [full-name]]))
 
+(set! *warn-on-reflection* true)
+
 ;; --- Logic adapted from your malli.error source ---
 
 (defn- levenshtein [s1 s2]

@@ -4,6 +4,8 @@
    [sturdy.malli-firewall.core :as c]
    [sturdy.malli-firewall.util :refer [full-name]]))
 
+(set! *warn-on-reflection* true)
+
 (defn- format-problem
   [[ky msg]]
   (str (full-name ky) ": " (string/join "; " msg)))

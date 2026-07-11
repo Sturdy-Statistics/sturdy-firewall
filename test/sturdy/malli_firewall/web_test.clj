@@ -4,6 +4,8 @@
    [sturdy.malli-firewall.web :as web]
    [sturdy.malli-firewall.schemas :as schemas]))
 
+(set! *warn-on-reflection* true)
+
 (deftest format-schema-error-test
   (testing "Formats details with both message and problems"
     (is (= "Invalid request parameters: username: missing.  token: missing"

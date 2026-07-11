@@ -1,5 +1,7 @@
 (ns sturdy.malli-firewall.util)
 
+(set! *warn-on-reflection* true)
+
 (defn full-name
   "Returns the string representation of a keyword (including namespace)
   or string. Returns nil for other types."
