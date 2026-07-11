@@ -95,6 +95,16 @@
                  "/%0D%0AHeader:x"
                  "/path/%09tab"
                  "/path/%7Fdelete"]]
+      (is (false? (m/validate schemas/RelativeURI uri)))))
+
+  (testing "Rejects raw and percent-encoded backslashes"
+    (doseq [uri ["/\\evil.example"
+                 "/\\/evil.example"
+                 "/path\\segment"
+                 "/%5cevil.example"
+                 "/%5Cevil.example"
+                 "/%5c/evil.example"
+                 "/path%5Csegment"]]
       (is (false? (m/validate schemas/RelativeURI uri))))))
 
 (deftest tagged-uuid-test

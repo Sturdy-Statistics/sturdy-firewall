@@ -33,6 +33,14 @@
   [s]
   (boolean (re-find #"(?i)%0[0-9a-f]|%1[0-9a-f]|%7f" s)))
 
+(defn- raw-or-percent-encoded-backslash?
+  "Browsers may normalize backslashes to forward slashes,
+  potentially turning `/\\host` into an external redirect. Also check
+  encoded form."
+  [s]
+  (or (string/includes? s "\\")
+      (boolean (re-find #"(?i)%5c" s))))
+
 (def NonBlankString
   [:string {:min 1}])
 
@@ -48,7 +56,8 @@
    (string/starts-with? s "/")
    (not (string/starts-with? s "//"))
    (not (raw-whitespace-or-control? s))
-   (not (percent-encoded-control? s))))
+   (not (percent-encoded-control? s))
+   (not (raw-or-percent-encoded-backslash? s))))
 
 (def RelativeURI
   [:fn {:error/message "must be a relative URI starting with '/'"} relative-uri?])
