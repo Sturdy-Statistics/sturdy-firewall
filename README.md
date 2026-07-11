@@ -16,6 +16,9 @@ Optionally, you may re-bind the dynamic var `malli-firewall.web/*strip-unknown-k
 The wrapped handler does not run unless schema validation passes, and will only run with a valid schema.
 On validation failure, `with-schema` returns a 400 response.
 This response is controlled by the dynamic var `malli-firewall.web/*bad-request-handler*`, which you may re-bind to your own 400 handler.
+The default handler returns a Ring response whose `:body` is a Clojure map and whose content type is JSON.
+It is designed to run behind Muuntaja, which serializes that map during content negotiation.
+If your application does not use Muuntaja or equivalent response middleware, bind `*bad-request-handler*` to a handler that encodes the body in the format your stack expects.
 
 malli-firewall was originally developed to meet the internal security and operational requirements of **Sturdy Statistics**.
 It is published as open source to support transparency, auditability, and reuse, but its design is intentionally conservative and driven by real production needs.
@@ -81,8 +84,11 @@ If you have multiple maps, use the `with-schemas` macro instead:
   (handler request))
 ```
 
-If validation fails, the handler is not executed and a `400 Bad Request`
-response is returned.
+`with-schemas` stops at the first invalid request map.
+The iteration order of the schema map is not part of its API, so when several maps are invalid at once, which error is returned first is unspecified.
+This is primarily intended for a small number of request maps (typically `:path-params`, `:body-params`, and `:query-params`); validation still fails safely with useful details for the reported error.
+
+If validation fails, the handler is not executed and a `400 Bad Request` response is returned.
 
 Example error:
 
